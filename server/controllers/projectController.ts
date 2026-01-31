@@ -52,7 +52,7 @@ export const makeRevision = async(req: Request, res:Response)=>{
 
         // Enhance user prompt
         const promptEnhanceResponse = await openai.chat.completions.create({
-            model:'z-ai/glm-4.5-air:free',
+            model:'tngtech/deepseek-r1t2-chimera:free',
             messages: [
                 {
                     role: 'system',
@@ -94,7 +94,7 @@ export const makeRevision = async(req: Request, res:Response)=>{
 
         // Generate Website Code 
         const codeGenerationResponse = await openai.chat.completions.create({
-            model:'z-ai/glm-4.5-air:free',
+            model:'tngtech/deepseek-r1t2-chimera:free',
             messages: [
                 {
                     role: 'system',
@@ -120,6 +120,21 @@ export const makeRevision = async(req: Request, res:Response)=>{
         })
 
         const code = codeGenerationResponse.choices[0].message.content || '';
+
+        if(!code){
+            await prisma.conversation.create({
+            data:{
+                role: 'assistant',
+                content: "I'he made the changes to your website! You can now preview it",
+                projectId
+            }
+        })
+        await prisma.user.update({
+            where: {id: userId},
+            data: {credits: {increment: 5}}
+        })
+        return;
+        }
 
         const version = await prisma.version.create({
             data:{

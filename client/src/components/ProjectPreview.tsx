@@ -3,6 +3,7 @@ import type { Project } from '../types';
 import { iframeScript } from '../assets/assets';
 import { Phone } from 'lucide-react';
 import EditorPanel from './EditorPanel';
+import LoaderSteps from './LoaderSteps';
 
 interface ProjectPreviewProps {
     project: Project;
@@ -107,9 +108,7 @@ interface ProjectPreviewProps {
 
             </>
         ): isGenerating && (
-            <div>
-                loading
-            </div>
+          <LoaderSteps/>
         )}
       
     </div>
