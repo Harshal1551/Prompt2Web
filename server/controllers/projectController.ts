@@ -9,7 +9,7 @@ export const makeRevision = async(req: Request, res:Response)=>{
 
     try {
 
-        const {projectId} = req.params;
+        const projectId = req.params.projectId as string;
         const {message} = req.body;
 
          const user = await prisma.user.findUnique({
@@ -187,7 +187,8 @@ export const rollbackToVersion = async(req: Request, res:Response)=>{
      if(!userId){
         return res.status(401).json({message: 'Unauthorized'});
      }
-     const {projectId, versionId} = req.params;
+     const projectId = req.params.projectId as string;
+     const versionId = req.params.versionId as string;
 
      const project = await prisma.websiteProject.findUnique({
         where: {id: projectId, userId},
@@ -233,7 +234,7 @@ export const rollbackToVersion = async(req: Request, res:Response)=>{
 export const deleteProject = async(req: Request, res:Response)=>{
    try {
      const userId = req.userId;
-     const {projectId} = req.params;
+     const projectId = req.params.projectId as string;
 
       await prisma.websiteProject.delete({
         where: {id: projectId, userId},
@@ -252,7 +253,7 @@ export const deleteProject = async(req: Request, res:Response)=>{
 export const getProjectPreview = async(req: Request, res:Response) => {
    try {
      const userId = req.userId;
-     const {projectId} = req.params;
+     const projectId = req.params.projectId as string;
 
      if(!userId){
         return res.status(401).json({message: 'Unauthorized'});
@@ -297,7 +298,7 @@ export const getPublishedProjects = async(req: Request, res:Response) => {
 
 export const getProjectById = async(req: Request, res:Response) => {
    try {
-      const { projectId } = req.params;
+     const projectId = req.params.projectId as string;
 
      const project = await prisma.websiteProject.findFirst({
         where: {id: projectId},
@@ -320,7 +321,7 @@ export const getProjectById = async(req: Request, res:Response) => {
 export const saveProjectCode = async(req: Request, res:Response) => {
    try {
       const userId = req.userId; 
-      const { projectId } = req.params;
+      const projectId = req.params.projectId as string;
 
       const {code} = req.body;
 
