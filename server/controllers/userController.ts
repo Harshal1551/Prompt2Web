@@ -221,7 +221,7 @@ export const getUserProject = async(req: Request, res:Response)=>{
             return res.status(401).json({message: 'Unauthorized'})
         }
 
-        const {projectId} = req.params;
+        const projectId = req.params.projectId as string;
 
         const project = await prisma.websiteProject.findUnique({
             where: {id:projectId, userId},
@@ -275,10 +275,10 @@ export const togglePublish = async(req: Request, res:Response)=>{
             return res.status(401).json({message: 'Unauthorized'})
         }
 
-       const {projectId} = req.params;
+       const projectId = req.params.projectId as string;
 
        const project = await prisma.websiteProject.findUnique({
-        where: {id: projectId,userId}
+        where: {id: projectId, userId}
        })
         
        if(!project){
