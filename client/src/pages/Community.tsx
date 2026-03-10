@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from 'react'
+import  { useEffect, useState } from 'react'
 import type { Project } from '../types';
 import { 
   Loader2Icon, 
   Search,
   Globe,
   CalendarIcon,
-  UserIcon,
   Sparkles,
   Eye,
   Heart,
