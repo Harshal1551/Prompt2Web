@@ -1,97 +1,251 @@
 import React, { useEffect, useState } from 'react'
 import { assets } from '../assets/assets';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { authClient } from '@/lib/auth-client';
-import {UserButton} from '@daveyplate/better-auth-ui';
+import { UserButton } from '@daveyplate/better-auth-ui';
 import api from '@/configs/axios';
 import { toast } from 'sonner';
-
+import { 
+  HomeIcon, 
+  FolderIcon, 
+  UsersIcon, 
+  CreditCardIcon,
+  MenuIcon,
+  XIcon,
+  SparklesIcon,
+  CoinsIcon
+} from 'lucide-react';
 
 const Navbar = () => {
-    const [menuOpen, setMenuOpen] = React.useState(false);
-    const navigate = useNavigate()
-    const [credits, setCredits] = useState(0)
+    const [menuOpen, setMenuOpen] = useState(false);
+    const navigate = useNavigate();
+    const location = useLocation();
+    const [credits, setCredits] = useState(0);
+    const [scrolled, setScrolled] = useState(false);
 
-    const {data: session} = authClient.useSession()
+    const { data: session } = authClient.useSession();
 
     const getCredits = async() => {
       try {
-        const {data} = await api.get('/api/user/credits');
-        setCredits(data.credits)
+        const { data } = await api.get('/api/user/credits');
+        setCredits(data.credits);
       } catch (error: any) {
-        toast.error(error?.response?.data?.message || error.message)
+        toast.error(error?.response?.data?.message || error.message);
         console.log(error);
       }
     }
 
-    useEffect(()=>{
+    useEffect(() => {
       if(session?.user){
-        getCredits()
+        getCredits();
       }
-    }, [session?.user])
+    }, [session?.user]);
+
+    // Handle scroll effect
+    useEffect(() => {
+      const handleScroll = () => {
+        setScrolled(window.scrollY > 20);
+      };
+      window.addEventListener('scroll', handleScroll);
+      return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    // Close mobile menu on route change
+    useEffect(() => {
+      setMenuOpen(false);
+    }, [location.pathname]);
+
+    const isActive = (path: string) => {
+      return location.pathname === path;
+    };
+
+    const navLinks = [
+      { path: '/', label: 'Home', icon: HomeIcon },
+      { path: '/projects', label: 'My Projects', icon: FolderIcon },
+      { path: '/community', label: 'Community', icon: UsersIcon },
+      { path: '/pricing', label: 'Pricing', icon: CreditCardIcon },
+    ];
 
   return (
     <>
-      <nav className="z-50 flex items-center justify-between w-full py-4 px-4 md:px-16 lg:px-24 xl:px-32 backdrop-blur border-b text-white border-slate-800">
-        <Link to='/'>
+      <nav className={`
+        fixed top-0 left-0 right-0 z-50 
+        transition-all duration-300
+        ${scrolled 
+          ? 'bg-slate-950/90 backdrop-blur-xl border-b border-slate-800/50 py-2' 
+          : 'bg-transparent py-4'
+        }
+      `}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <Link to='/' className="flex items-center gap-2 group">
               <img
-               src={assets.logo}
-               alt="logo"
-               className="h-7 sm:h-9 md:h-10"
+                src={assets.logo}
+                alt="Prompt2Web"
+                className="h-7 sm:h-8 md:h-9 transition-transform group-hover:scale-105"
               />
+            </Link>
 
-          </Link>
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center gap-1">
+              {navLinks.map((link) => {
+                const Icon = link.icon;
+                return (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    className={`
+                      flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+                      transition-all duration-300 relative group
+                      ${isActive(link.path)
+                        ? 'text-white bg-gradient-to-r from-indigo-600/20 to-purple-600/20 border border-indigo-500/30'
+                        : 'text-slate-300 hover:text-white hover:bg-white/5'
+                      }
+                    `}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span>{link.label}</span>
+                    {isActive(link.path) && (
+                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-indigo-400 rounded-full"></span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
 
-          <div className="hidden md:flex items-center gap-8 transition duration-500">
-            <Link to='/'>Home</Link>
-            <Link to='/projects'>My Projects</Link>
-            <Link to='/community'>Community</Link>
-            <Link to='/pricing'>Pricing</Link>
-            
-          </div>
+            {/* Right section - Credits & Auth */}
+            <div className="flex items-center gap-3">
+              {session?.user ? (
+                <>
+                  {/* Credits Badge */}
+                  <div className="hidden sm:flex items-center gap-2 bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border border-amber-500/20 rounded-full px-4 py-1.5">
+                    <CoinsIcon className="w-4 h-4 text-amber-400" />
+                    <span className="text-sm text-slate-300">
+                      <span className="font-semibold text-amber-400">{credits}</span> credits
+                    </span>
+                  </div>
 
-          <div className="flex items-center gap-3">
-            
-            {!session?.user ?(
-              <button onClick={()=> navigate('/auth/signin')} className="px-6 py-1.5 max-sm:text-sm bg-indigo-600 active:scale-95 hover:bg-indigo-700 transition rounded">
-                Get started
+                  {/* Mobile Credits Badge */}
+                  <div className="sm:hidden bg-white/10 px-3 py-1.5 rounded-full">
+                    <span className="text-xs text-slate-300">
+                      <span className="font-semibold text-amber-400">{credits}</span>
+                    </span>
+                  </div>
+
+                  {/* User Button - Removed classNames prop to avoid type error */}
+                  <UserButton size='icon' />
+                </>
+              ) : (
+                <button 
+                  onClick={() => navigate('/auth/signin')} 
+                  className="group relative px-6 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm font-medium rounded-lg transition-all duration-300 active:scale-95 overflow-hidden"
+                >
+                  <span className="relative z-10 flex items-center gap-2">
+                    <SparklesIcon className="w-4 h-4" />
+                    Get Started
+                  </span>
+                  <span className="absolute inset-0 bg-gradient-to-r from-indigo-400 to-purple-400 opacity-0 group-hover:opacity-20 transition-opacity"></span>
+                </button>
+              )}
+
+              {/* Mobile Menu Button */}
+              <button 
+                className="md:hidden p-2 hover:bg-white/5 rounded-lg transition-colors"
+                onClick={() => setMenuOpen(true)}
+                aria-label="Open menu"
+              >
+                <MenuIcon className="w-5 h-5 text-slate-300" />
               </button>
-            ) : (
-              <>
-              <button className='bg-white/10 px-5 py-1.5 text-xs sm:text-sm border text-gray-200 rounded-full'>
-              Credits: <span className='text-indigo-300'>{credits}</span>
-              </button>
-                <UserButton size='icon'/>
-              </>
-            )
-            }
-
-             <button id="open-menu" className="md:hidden active:scale-90 transition" onClick={() => setMenuOpen(true)} >
-            <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></svg>
-          </button>
+            </div>
           </div>
+        </div>
+      </nav>
 
-         
-        </nav>
+      {/* Mobile Menu Overlay */}
+      {menuOpen && (
+        <div className="fixed inset-0 z-[100] md:hidden">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/60 backdrop-blur-md"
+            onClick={() => setMenuOpen(false)}
+          ></div>
+          
+          {/* Menu Panel */}
+          <div className="absolute right-0 top-0 bottom-0 w-64 bg-slate-900 border-l border-slate-800 shadow-2xl transform transition-transform duration-300">
+            <div className="flex flex-col h-full">
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 border-b border-slate-800">
+                <span className="text-sm font-medium text-slate-400">Menu</span>
+                <button 
+                  className="p-1 hover:bg-white/5 rounded-lg transition-colors"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <XIcon className="w-5 h-5 text-slate-400" />
+                </button>
+              </div>
 
-        {/* Mobile Menu */}
-        {menuOpen && (
-          <div className="fixed inset-0 z-[100] bg-black/60 text-white backdrop-blur flex flex-col items-center justify-center text-lg gap-8 md:hidden transition-transform duration-300">
-            <Link to='/' onClick={() => setMenuOpen(false)}>Home</Link>
-            <Link to='/projects' onClick={() => setMenuOpen(false)}>My Projects</Link>
-            <Link to='/community' onClick={() => setMenuOpen(false)}>Community</Link>
-            <Link to='/pricing' onClick={() => setMenuOpen(false)}>Pricing</Link>
-            
-            
-            <button className="active:ring-3 active:ring-white aspect-square size-10 p-1 items-center justify-center bg-slate-100 hover:bg-slate-200 transition text-black rounded-md flex" onClick={() => setMenuOpen(false)} >
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-            </button>
+              {/* Navigation Links */}
+              <div className="flex-1 py-4">
+                {navLinks.map((link) => {
+                  const Icon = link.icon;
+                  return (
+                    <Link
+                      key={link.path}
+                      to={link.path}
+                      className={`
+                        flex items-center gap-3 px-4 py-3 text-sm transition-colors
+                        ${isActive(link.path)
+                          ? 'bg-gradient-to-r from-indigo-600/20 to-purple-600/20 text-white border-l-2 border-indigo-400'
+                          : 'text-slate-400 hover:text-white hover:bg-white/5'
+                        }
+                      `}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span>{link.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {/* User Info Footer */}
+              {session?.user && (
+                <div className="p-4 border-t border-slate-800">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                      <span className="text-xs font-medium text-white">
+                        {session.user.email?.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-white truncate">
+                        {session.user.name || 'User'}
+                      </p>
+                      <p className="text-[10px] text-slate-500 truncate">
+                        {session.user.email}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between bg-white/5 rounded-lg p-2">
+                    <span className="text-xs text-slate-400">Credits</span>
+                    <span className="text-sm font-semibold text-amber-400">{credits}</span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* BACKGROUND IMAGE */}
-          <img src="https://raw.githubusercontent.com/prebuiltui/prebuiltui/refs/heads/main/assets/hero/bg-gradient-2.png" className="absolute inset-0 -z-10 size-full opacity" alt="" />
+      {/* Spacer to prevent content from hiding under fixed navbar */}
+      <div className="h-16 sm:h-[72px]"></div>
 
+      {/* Background image (optional) */}
+      <img 
+        src="https://raw.githubusercontent.com/prebuiltui/prebuiltui/refs/heads/main/assets/hero/bg-gradient-2.png" 
+        className="fixed inset-0 -z-10 size-full object-cover opacity-50 pointer-events-none" 
+        alt=""
+      />
     </>
   )
 }
